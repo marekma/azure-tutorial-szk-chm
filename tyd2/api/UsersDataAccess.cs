@@ -12,7 +12,7 @@ namespace api
         public UsersDataAccess()
         {
             this.user = "marekma";
-            this.password = "";
+            this.password = "Azure@cybercom";
         }
 
         public List<User> GetAll()

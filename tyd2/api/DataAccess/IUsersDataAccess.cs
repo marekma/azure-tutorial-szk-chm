@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using api.Entities;
+using System.Collections.Generic;
 
 namespace api.DataAccess
 {

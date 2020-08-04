@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using api.DataAccess;
+using api.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 

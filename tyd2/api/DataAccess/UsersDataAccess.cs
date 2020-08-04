@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using api.Entities;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 

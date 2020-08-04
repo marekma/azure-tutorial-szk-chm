@@ -10,6 +10,7 @@ export class FetchData extends Component {
 
     componentDidMount() {
         this.populateWeatherData();
+
     }
 
     static renderUsersTable(users) {
@@ -51,5 +52,9 @@ export class FetchData extends Component {
         const response = await fetch('https://app-1-tyd-2.azurewebsites.net/users');
         const data = await response.json();
         this.setState({ users: data, loading: false });
+    }
+
+    async authorize() {
+        await this.fetch('./auth/me', { withCredentias: true });
     }
 }

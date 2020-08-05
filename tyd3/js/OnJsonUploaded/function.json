@@ -1,0 +1,18 @@
+{
+  "bindings": [
+    {
+      "name": "myBlob",
+      "type": "blobTrigger",
+      "direction": "in",
+      "path": "jsons/{name}",
+      "connection": "json2excel0formatter_STORAGE"
+    },
+    {
+      "name": "outputBlob",
+      "type": "blob",
+      "direction": "out",
+      "path": "csvs/{rand-guid}.csv",
+      "connection": "json2excel0formatter_STORAGE"
+    }
+  ]
+}

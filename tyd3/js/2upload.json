@@ -1,0 +1,18 @@
+{
+	"user1":{
+		"firstname": "Adrian",
+		"lastname": "Adrianski"
+	},
+	"user2":{
+		"firstname": "Roman",
+		"lastname": "Romanski"
+	},
+	"user2":{
+		"firstname": "Bartek",
+		"lastname": "Bartkowski"
+	},
+	"user3":{
+		"firstname": "Celina",
+		"lastname": "Celinska"
+	}
+}

@@ -23,7 +23,7 @@ namespace StockMarket.DataAccess
         {
             this.logger.LogInformation("Cosmos client, database and container initialization.");
 
-            CosmosClient client = new CosmosClient(this.configuration.GetConnectionString($"cosmosdb-stockmarket"));
+            CosmosClient client = new CosmosClient(this.configuration.GetConnectionString($"stockmarket-cosmosdb"));
             Database database = await client.CreateDatabaseIfNotExistsAsync("StockMarket");
             this.container = await database.CreateContainerIfNotExistsAsync(
                 nameof(ExchangeRate),

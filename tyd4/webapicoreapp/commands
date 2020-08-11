@@ -1,0 +1,19 @@
+docker build -t webapicoreapp .
+
+#az acr create -n webapicoredemo -g tutotial --sku Standard
+
+docker tag webapicoreapp acrmarekma.azurecr.io/webapicoredemo:v1
+
+az acr login -n acrmarekma
+
+docker push acrmarekma.azurecr.io/webapicoredemo:v1
+
+az container create 
+--resource-group tutotial 
+--name webapicoredemo 
+--image acrmarekma.azurecr.io/webapicoredemo:v1 
+--dns-name-label webapi-core-demo 
+--ports 80 
+--registry-username acrmarekma 
+--registry-password aYD/MBGjjhFm7qBkk5PATsanTMgCs=k2
+

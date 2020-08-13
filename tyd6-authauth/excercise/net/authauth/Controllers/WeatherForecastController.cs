@@ -37,12 +37,5 @@ namespace authauth.Controllers
             })
             .ToArray();
         }
-
-        [HttpPost]
-        public void Post()
-        {
-            var token = this.HttpContext.Request.Cookies["token"];
-
-        }
     }
 }

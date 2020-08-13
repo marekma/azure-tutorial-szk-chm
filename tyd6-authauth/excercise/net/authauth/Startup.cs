@@ -31,7 +31,7 @@ namespace authauth
                 .AddInMemoryClients(Config.Clients)
                 .AddTestUsers(Config.Users)
                 .AddDeveloperSigningCredential();
-                
+
             services
             .AddAuthorization(options =>
                 {
@@ -47,24 +47,25 @@ namespace authauth
                 .AddAuthentication("Bearer")
                 .AddJwtBearer("Bearer", options =>
                 {
-                    options.Authority = "http://localhost:6001";
+                    options.Authority = "https://localhost:5001";
                     options.RequireHttpsMetadata = false;
                     options.Audience = "api1";
                 })
-            .AddOpenIdConnect("aad-b2c", "Azure Active Directory B2C", options =>
+            .AddOpenIdConnect("aad-b2c", "Azure AD B2C", options =>
             {
                 options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                 options.SignOutScheme = IdentityServerConstants.SignoutScheme;
-                options.Authority = "https://markappincybercom.b2clogin.com/tfp/markappincybercom.onmicrosoft.com/B2C_1_signupandlogin/v2.0";
+                options.Authority = "https://markappincybercom.b2clogin.com/tfp/markappincybercom.onmicrosoft.com/B2C_1_markappincybercom/v2.0";
                 options.RequireHttpsMetadata = true;
-                options.Scope.Add("email");
+                options.Scope.Add("17444151-cc3e-4d91-8895-d2b7db86327f");
                 options.ResponseType = "code id_token token";
+                options.ResponseMode = "form_post";
                 options.TokenValidationParameters =
                         new TokenValidationParameters { ValidateIssuer = false };
                 options.ClientId = "17444151-cc3e-4d91-8895-d2b7db86327f";
                 options.ClientSecret = "jSjgKsVm.w~a3hHl91myKw_skp11a.1~w2";
                 options.GetClaimsFromUserInfoEndpoint = true;
-                options.CallbackPath = "/signin-oidc-b2c";
+                options.CallbackPath = "/redirect/signin-oidc-b2c";
             });
         }
 
@@ -76,12 +77,12 @@ namespace authauth
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHttpsRedirection();
-            app.UseRouting();
-            app.UseAuthorization();
-            app.UseAuthentication();
-
-            app.UseEndpoints(endpoints =>
+            app.UseHttpsRedirection()
+            .UseRouting()
+            .UseAuthentication()
+            .UseAuthorization()
+            .UseIdentityServer()
+            .UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });

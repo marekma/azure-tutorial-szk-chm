@@ -34,23 +34,30 @@ namespace authauth
 
             services
             .AddAuthorization(options =>
+            {
+                options.AddPolicy("OnlyWeirdScope", builder =>
                 {
-                    options.AddPolicy("OnlyWeirdScope", builder =>
-                    {
-                        builder.RequireClaim("http://schemas.microsoft.com/identity/claims/scope", "WeirdScope");
-                    });
-                    options.AddPolicy("OnlyTestGroup", builder =>
-                    {
-                        builder.RequireClaim("groups", "7f8e7276-822c-4678-b5f8-2fc6337ba90b");
-                    });
-                })
-                .AddAuthentication("Bearer")
-                .AddJwtBearer("Bearer", options =>
+                    builder.RequireClaim("http://schemas.microsoft.com/identity/claims/scope", "WeirdScope");
+                });
+                options.AddPolicy("OnlyTestGroup", builder =>
                 {
-                    options.Authority = "https://localhost:5001";
-                    options.RequireHttpsMetadata = false;
-                    options.Audience = "api1";
-                })
+                    builder.RequireClaim("groups", "7f8e7276-822c-4678-b5f8-2fc6337ba90b");
+                 });
+            })
+            .AddAuthentication("Bearer")
+            .AddJwtBearer("Bearer", options =>
+            {
+                options.Authority = "https://localhost:5001";
+                options.RequireHttpsMetadata = false;
+                options.Audience = "api1";
+            })                
+            .AddJwtBearer("aad-token", "Azure AD JWT", options =>
+            {
+                options.RequireHttpsMetadata = true;
+                options.Authority = "https://login.microsoftonline.com/common";
+                options.TokenValidationParameters =
+                    new TokenValidationParameters { ValidateAudience = false, ValidateLifetime = false, ValidateIssuerSigningKey = false, ValidateTokenReplay = false, ValidateActor = false, ValidateIssuer = false };
+            })
             .AddOpenIdConnect("aad-b2c", "Azure AD B2C", options =>
             {
                 options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
@@ -77,14 +84,14 @@ namespace authauth
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHttpsRedirection()
+            app
             .UseRouting()
             .UseAuthentication()
             .UseAuthorization()
             .UseIdentityServer()
             .UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+                endpoints.MapDefaultControllerRoute();
             });
         }
     }

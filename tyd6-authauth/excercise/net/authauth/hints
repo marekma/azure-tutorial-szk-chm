@@ -1,0 +1,3 @@
+Registered app manifest should contain this line:
+"oauth2AllowImplicitFlow": true
+

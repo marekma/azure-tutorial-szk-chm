@@ -13,6 +13,13 @@
             "metadata": {
                 "description": "Password used by admin login"
             }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources"
+            }
         }
     },
     "functions": [],
@@ -27,7 +34,7 @@
             "name": "[variables('sql-server-name')]",
             "type": "Microsoft.Sql/servers",
             "apiVersion": "2014-04-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "tags": {
                 "displayName": "[variables('sql-server-name')]"
             },
@@ -42,7 +49,7 @@
                     "dependsOn": [
                         "[resourceId('Microsoft.Sql/servers', variables('sql-server-name'))]"
                     ],
-                    "location": "[resourceGroup().location]",
+                    "location": "[parameters('location')]",
                     "name": "AllowAllWindowsAzureIps",
                     "properties": {
                         "startIpAddress": "0.0.0.0",
@@ -53,7 +60,7 @@
                     "name": "[concat(variables('sql-server-name'), '/', variables('sql-db-name'))]",
                     "type": "Microsoft.Sql/servers/databases",
                     "apiVersion": "2014-04-01",
-                    "location": "[resourceGroup().location]",
+                    "location": "[parameters('location')]",
                     "tags": {
                         "displayName": "[variables('sql-db-name')]"
                     },
@@ -73,7 +80,7 @@
             "name": "[variables('app-plan')]",
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2018-02-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "sku": {
                 "name": "F1",
                 "capacity": 1
@@ -89,7 +96,7 @@
             "name": "[variables('web-app-name')]",
             "type": "Microsoft.Web/sites",
             "apiVersion": "2018-11-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "tags": {
                 "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-plan'))]": "Resource",
                 "displayName": "[variables('web-app-name')]"
@@ -102,18 +109,20 @@
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('app-plan'))]"
             },
             "resources": [
-             {
-                 "apiVersion": "2018-02-01",
-                 "name": "connectionstrings",
-                 "type": "config",
-                 "dependsOn": [
-                     "[variables('web-app-name')]"
-                 ],
-                 "properties": {
-                     "SQL-DB-CONNECTION": "[concat('DataSource=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sql-server-name'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('sql-db-name'), 'User Id=', parameters('sqlAdminLogin'), '@', reference(concat('Microsoft.Sql/servers/', variables('sql-server-name'))).fullyQualifiedDomainName, ';Password=', parameters('sqlAdminPassword'), ';')]",
-                     "type": "SQLAzure"
-                 }
-             }
+                {
+                    "apiVersion": "2018-02-01",
+                    "name": "connectionstrings",
+                    "type": "config",
+                    "dependsOn": [
+                        "[variables('web-app-name')]"
+                    ],
+                    "properties": {
+                        "SQL-DB-CONNECTION": {
+                            "value": "[concat('DataSource=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sql-server-name'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('sql-db-name'), 'User Id=', parameters('sqlAdminLogin'), '@', reference(concat('Microsoft.Sql/servers/', variables('sql-server-name'))).fullyQualifiedDomainName, ';Password=', parameters('sqlAdminPassword'), ';')]",
+                            "type": "SQLAzure"
+                        }
+                    }
+                }
             ]
         }
     ],

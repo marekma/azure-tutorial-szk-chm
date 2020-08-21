@@ -1,0 +1,121 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "sqlAdminLogin": {
+            "type": "string",
+            "metadata": {
+                "description": "Admin login"
+            }
+        },
+        "sqlAdminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password used by admin login"
+            }
+        }
+    },
+    "functions": [],
+    "variables": {
+        "sql-server-name": "tyd10-arm-demo-server",
+        "sql-db-name": "tyd10-arm-demo-db",
+        "app-plan": "tyd10-arm-demo-plan",
+        "web-app-name": "tyd10-arm-demo-web-app"
+    },
+    "resources": [
+        {
+            "name": "[variables('sql-server-name')]",
+            "type": "Microsoft.Sql/servers",
+            "apiVersion": "2014-04-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "[variables('sql-server-name')]"
+            },
+            "properties": {
+                "administratorLogin": "[parameters('sqlAdminLogin')]",
+                "administratorLoginPassword": "[parameters('sqlAdminPassword')]"
+            },
+            "resources": [
+                {
+                    "type": "firewallRules",
+                    "apiVersion": "2014-04-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Sql/servers', variables('sql-server-name'))]"
+                    ],
+                    "location": "[resourceGroup().location]",
+                    "name": "AllowAllWindowsAzureIps",
+                    "properties": {
+                        "startIpAddress": "0.0.0.0",
+                        "endIpAddress": "0.0.0.0"
+                    }
+                },
+                {
+                    "name": "[concat(variables('sql-server-name'), '/', variables('sql-db-name'))]",
+                    "type": "Microsoft.Sql/servers/databases",
+                    "apiVersion": "2014-04-01",
+                    "location": "[resourceGroup().location]",
+                    "tags": {
+                        "displayName": "[variables('sql-db-name')]"
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Sql/servers', variables('sql-server-name'))]"
+                    ],
+                    "properties": {
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "edition": "Basic",
+                        "maxSizeBytes": "1073741824",
+                        "requestedServiceObjectiveName": "Basic"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "[variables('app-plan')]",
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "F1",
+                "capacity": 1
+            },
+            "tags": {
+                "displayName": "[variables('app-plan')]"
+            },
+            "properties": {
+                "name": "[variables('app-plan')]"
+            }
+        },
+        {
+            "name": "[variables('web-app-name')]",
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-plan'))]": "Resource",
+                "displayName": "[variables('web-app-name')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('app-plan'))]"
+            ],
+            "properties": {
+                "name": "[variables('web-app-name')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('app-plan'))]"
+            },
+            "resources": [
+             {
+                 "apiVersion": "2018-02-01",
+                 "name": "connectionstrings",
+                 "type": "config",
+                 "dependsOn": [
+                     "[variables('web-app-name')]"
+                 ],
+                 "properties": {
+                     "SQL-DB-CONNECTION": "[concat('DataSource=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sql-server-name'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('sql-db-name'), 'User Id=', parameters('sqlAdminLogin'), '@', reference(concat('Microsoft.Sql/servers/', variables('sql-server-name'))).fullyQualifiedDomainName, ';Password=', parameters('sqlAdminPassword'), ';')]",
+                     "type": "SQLAzure"
+                 }
+             }
+            ]
+        }
+    ],
+    "outputs": {}
+}

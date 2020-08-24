@@ -6,7 +6,7 @@
     "variables": {
         "server-farm-name": "tyd10-zad-server-farm",
         "app-func-name": "tyd10-zad-func-app",
-        "storage-acc-gen-purp-name": "tyd10zadstorageaccgenpurp",
+        "storage-acc-gen-purp-name": "tyd10zadstoraccgenpurp",
         "app-insights-name": "tyd10-zad-app-insights",
         "app-service-plan-name": "tyd10-zad-app-plan",
         "web-app-insights-name": "tyd10-zad-web-app-insights"
@@ -156,77 +156,7 @@
                 "enabled": false,
                 "targetResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]"
             }
-        },
-        {
-            "name": "[concat(variables('app-insights-name'), '-CPUHigh-', variables('app-service-plan-name'))]",
-            "type": "Microsoft.Insights/alertrules",
-            "apiVersion": "2016-03-01",
-            "location": "[resourceGroup().location]",
-            "tags": {
-                "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]": "Resource",
-                "displayName": "[concat(variables('app-insights-name'), 'CPUHigh rule for ', variables('app-service-plan-name'))]"
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]"
-            ],
-            "properties": {
-                "name": "[concat(variables('app-insights-name'), '-CPUHigh-', variables('app-service-plan-name'))]",
-                "description": "[concat('The average CPU is high across all the instances of ', variables('app-service-plan-name'))]",
-                "isEnabled": false,
-                "condition": {
-                    "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-                    "dataSource": {
-                        "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-                        "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]",
-                        "metricName": "CpuPercentage"
-                    },
-                    "operator": "GreaterThan",
-                    "threshold": 90,
-                    "windowSize": "PT15M"
-                },
-                "action": {
-                    "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-                    "sendToServiceOwners": true,
-                    "customEmails": [
-                    ]
-                }
-            }
-        },
-        {
-            "name": "[concat(variables('app-insights-name') ,'-LongHttpQueue-', variables('app-service-plan-name'))]",
-            "type": "Microsoft.Insights/alertrules",
-            "apiVersion": "2016-03-01",
-            "location": "[resourceGroup().location]",
-            "tags": {
-                "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]": "Resource",
-                "displayName": "[concat(variables('app-insights-name'),' LongHttpQueue rule for ', variables('app-service-plan-name'))]"
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]"
-            ],
-            "properties": {
-                "name": "[concat(variables('app-insights-name'), '-LongHttpQueue-',variables('app-service-plan-name'))]",
-                "description": "[concat('The HTTP queue for the instances of ',variables('app-service-plan-name'), 'has a large number of pending requests.')]",
-                "isEnabled": false,
-                "condition": {
-                    "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-                    "dataSource": {
-                        "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-                        "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]",
-                        "metricName": "HttpQueueLength"
-                    },
-                    "operator": "GreaterThan",
-                    "threshold": 100.0,
-                    "windowSize": "PT5M"
-                },
-                "action": {
-                    "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-                    "sendToServiceOwners": true,
-                    "customEmails": [
-                    ]
-                }
-            }
-        },
+        },       
         {
             "name": "[variables('web-app-insights-name')]",
             "type": "Microsoft.Web/sites",
@@ -243,76 +173,7 @@
                 "name": "[variables('web-app-insights-name')]",
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]"
             }
-        },
-        {
-            "name": "[concat(variables('app-insights-name'), '-ServerErrors-', variables('web-app-insights-name'))]",
-            "type": "Microsoft.Insights/alertrules",
-            "apiVersion": "2016-03-01",
-            "location": "[resourceGroup().location]",
-            "tags": {
-                "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('web-app-insights-name'))]": "Resource",
-                "displayName": "[concat(variables('app-insights-name'), ' ServerErrors rule for ', variables('web-app-insights-name'))]"
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('web-app-insights-name'))]"
-            ],
-            "properties": {
-                "name": "[concat(variables('app-insights-name'), '-ServerErrors-', variables('web-app-insights-name'))]",
-                "description": "[concat(variables('web-app-insights-name'), ' has some server errors, status code 5xx.')]",
-                "isEnabled": false,
-                "condition": {
-                    "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-                    "dataSource": {
-                        "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-                        "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('web-app-insights-name'))]",
-                        "metricName": "Http5xx"
-                    },
-                    "operator": "GreaterThan",
-                    "threshold": 0.0,
-                    "windowSize": "PT5M"
-                },
-                "action": {
-                    "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-                    "sendToServiceOwners": true,
-                    "customEmails": [
-                    ]
-                }
-            }
-        },
-        {
-            "name": "[concat(variables('app-insights-name'),'-ForbiddenRequests-', variables('web-app-insights-name'))]",
-            "type": "Microsoft.Insights/alertrules",
-            "apiVersion": "2016-03-01",
-            "location": "[resourceGroup().location]",
-            "tags": {
-                "displayName": "[concat(variables('app-insights-name'),' ForbiddenRequests rule for ', variables('web-app-insights-name'))]"
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('web-app-insights-name'))]"
-            ],
-            "properties": {
-                "name": "[concat(variables('app-insights-name'),'-ForbiddenRequests-', variables('web-app-insights-name'))]",
-                "description": "[concat(variables('web-app-insights-name'),' has some requests that are forbidden, status code 403.')]",
-                "isEnabled": false,
-                "condition": {
-                    "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-                    "dataSource": {
-                        "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-                        "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('web-app-insights-name'))]",
-                        "metricName": "Http403"
-                    },
-                    "operator": "GreaterThan",
-                    "threshold": 0,
-                    "windowSize": "PT5M"
-                },
-                "action": {
-                    "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-                    "sendToServiceOwners": true,
-                    "customEmails": [
-                    ]
-                }
-            }
-        },
+        },        
         {
             "name": "[variables('app-insights-name')]",
             "type": "Microsoft.Insights/components",

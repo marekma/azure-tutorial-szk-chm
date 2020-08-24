@@ -4,15 +4,18 @@
     "parameters": {},
     "functions": [],
     "variables": {
-        "app-func-server-farm": "tyd10-zad-server-farm-1",
-        "app-func-1": "tyd10-zad-func1",
-        "storage-acc-gen-purp": "tyd10-storage-acc-gen-purp"
+        "server-farm-name": "tyd10-zad-server-farm",
+        "app-func-name": "tyd10-zad-func-app",
+        "storage-acc-gen-purp-name": "tyd10zadstorageaccgenpurp",
+        "app-insights-name": "tyd10-zad-app-insights",
+        "app-service-plan-name": "tyd10-zad-app-plan",
+        "web-app-insights-name": "tyd10-zad-web-app-insights"
     },
     "resources": [
         {
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2019-06-01",
-            "name": "[variables('storage-acc-gen-purp')]",
+            "name": "[variables('storage-acc-gen-purp-name')]",
             "location": "[resourceGroup().location]",
             "tags": {
                 "tutorial": "tyd10-tutorial"
@@ -48,7 +51,7 @@
         {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2018-02-01",
-            "name": "[variables('app-func-server-farm')]",
+            "name": "[variables('server-farm-name')]",
             "location": "[resourceGroup().location]",
             "tags": {
                 "tutorial": "tyd10-tutorial"
@@ -73,34 +76,289 @@
             }
         },
         {
-            "name": "[variables('app-func-1')]",
+            "name": "[variables('app-service-plan-name')]",
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "F1",
+                "capacity": 1
+            },
+            "tags": {
+                "displayName": "[variables('app-service-plan-name')]"
+            },
+            "properties": {
+                "name": "[variables('app-service-plan-name')]"
+            }
+        },
+        {
+            "name": "[variables('app-insights-name')]",
+            "type": "Microsoft.Insights/autoscalesettings",
+            "apiVersion": "2014-04-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]": "Resource",
+                "displayName": "[concat(variables('app-insights-name'), 'AutoScale Settings for ', variables('app-service-plan-name'))]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]"
+            ],
+            "properties": {
+                "name": "[variables('app-insights-name')]",
+                "profiles": [
+                    {
+                        "name": "Default",
+                        "capacity": {
+                            "minimum": 1,
+                            "maximum": 2,
+                            "default": 1
+                        },
+                        "rules": [
+                            {
+                                "metricTrigger": {
+                                    "metricName": "CpuPercentage",
+                                    "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]",
+                                    "timeGrain": "PT1M",
+                                    "statistic": "Average",
+                                    "timeWindow": "PT10M",
+                                    "timeAggregation": "Average",
+                                    "operator": "GreaterThan",
+                                    "threshold": 80.0
+                                },
+                                "scaleAction": {
+                                    "direction": "Increase",
+                                    "type": "ChangeCount",
+                                    "value": 1,
+                                    "cooldown": "PT10M"
+                                }
+                            },
+                            {
+                                "metricTrigger": {
+                                    "metricName": "CpuPercentage",
+                                    "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]",
+                                    "timeGrain": "PT1M",
+                                    "statistic": "Average",
+                                    "timeWindow": "PT1H",
+                                    "timeAggregation": "Average",
+                                    "operator": "LessThan",
+                                    "threshold": 60.0
+                                },
+                                "scaleAction": {
+                                    "direction": "Decrease",
+                                    "type": "ChangeCount",
+                                    "value": 1,
+                                    "cooldown": "PT1H"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "enabled": false,
+                "targetResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]"
+            }
+        },
+        {
+            "name": "[concat(variables('app-insights-name'), '-CPUHigh-', variables('app-service-plan-name'))]",
+            "type": "Microsoft.Insights/alertrules",
+            "apiVersion": "2016-03-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]": "Resource",
+                "displayName": "[concat(variables('app-insights-name'), 'CPUHigh rule for ', variables('app-service-plan-name'))]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]"
+            ],
+            "properties": {
+                "name": "[concat(variables('app-insights-name'), '-CPUHigh-', variables('app-service-plan-name'))]",
+                "description": "[concat('The average CPU is high across all the instances of ', variables('app-service-plan-name'))]",
+                "isEnabled": false,
+                "condition": {
+                    "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
+                    "dataSource": {
+                        "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
+                        "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]",
+                        "metricName": "CpuPercentage"
+                    },
+                    "operator": "GreaterThan",
+                    "threshold": 90,
+                    "windowSize": "PT15M"
+                },
+                "action": {
+                    "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
+                    "sendToServiceOwners": true,
+                    "customEmails": [
+                    ]
+                }
+            }
+        },
+        {
+            "name": "[concat(variables('app-insights-name') ,'-LongHttpQueue-', variables('app-service-plan-name'))]",
+            "type": "Microsoft.Insights/alertrules",
+            "apiVersion": "2016-03-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]": "Resource",
+                "displayName": "[concat(variables('app-insights-name'),' LongHttpQueue rule for ', variables('app-service-plan-name'))]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]"
+            ],
+            "properties": {
+                "name": "[concat(variables('app-insights-name'), '-LongHttpQueue-',variables('app-service-plan-name'))]",
+                "description": "[concat('The HTTP queue for the instances of ',variables('app-service-plan-name'), 'has a large number of pending requests.')]",
+                "isEnabled": false,
+                "condition": {
+                    "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
+                    "dataSource": {
+                        "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
+                        "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]",
+                        "metricName": "HttpQueueLength"
+                    },
+                    "operator": "GreaterThan",
+                    "threshold": 100.0,
+                    "windowSize": "PT5M"
+                },
+                "action": {
+                    "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
+                    "sendToServiceOwners": true,
+                    "customEmails": [
+                    ]
+                }
+            }
+        },
+        {
+            "name": "[variables('web-app-insights-name')]",
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]": "Resource",
+                "displayName": "[variables('web-app-insights-name')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]"
+            ],
+            "properties": {
+                "name": "[variables('web-app-insights-name')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]"
+            }
+        },
+        {
+            "name": "[concat(variables('app-insights-name'), '-ServerErrors-', variables('web-app-insights-name'))]",
+            "type": "Microsoft.Insights/alertrules",
+            "apiVersion": "2016-03-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('web-app-insights-name'))]": "Resource",
+                "displayName": "[concat(variables('app-insights-name'), ' ServerErrors rule for ', variables('web-app-insights-name'))]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('web-app-insights-name'))]"
+            ],
+            "properties": {
+                "name": "[concat(variables('app-insights-name'), '-ServerErrors-', variables('web-app-insights-name'))]",
+                "description": "[concat(variables('web-app-insights-name'), ' has some server errors, status code 5xx.')]",
+                "isEnabled": false,
+                "condition": {
+                    "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
+                    "dataSource": {
+                        "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
+                        "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('web-app-insights-name'))]",
+                        "metricName": "Http5xx"
+                    },
+                    "operator": "GreaterThan",
+                    "threshold": 0.0,
+                    "windowSize": "PT5M"
+                },
+                "action": {
+                    "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
+                    "sendToServiceOwners": true,
+                    "customEmails": [
+                    ]
+                }
+            }
+        },
+        {
+            "name": "[concat(variables('app-insights-name'),'-ForbiddenRequests-', variables('web-app-insights-name'))]",
+            "type": "Microsoft.Insights/alertrules",
+            "apiVersion": "2016-03-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "[concat(variables('app-insights-name'),' ForbiddenRequests rule for ', variables('web-app-insights-name'))]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('web-app-insights-name'))]"
+            ],
+            "properties": {
+                "name": "[concat(variables('app-insights-name'),'-ForbiddenRequests-', variables('web-app-insights-name'))]",
+                "description": "[concat(variables('web-app-insights-name'),' has some requests that are forbidden, status code 403.')]",
+                "isEnabled": false,
+                "condition": {
+                    "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
+                    "dataSource": {
+                        "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
+                        "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('web-app-insights-name'))]",
+                        "metricName": "Http403"
+                    },
+                    "operator": "GreaterThan",
+                    "threshold": 0,
+                    "windowSize": "PT5M"
+                },
+                "action": {
+                    "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
+                    "sendToServiceOwners": true,
+                    "customEmails": [
+                    ]
+                }
+            }
+        },
+        {
+            "name": "[variables('app-insights-name')]",
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2015-05-01",
+            "location": "[resourceGroup().location]",
+            "kind": "web",
+            "tags": {
+                "displayName": "[concat(variables('app-insights-name'), ' Component for ', variables('web-app-insights-name'))]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('web-app-insights-name'))]"
+            ],
+            "properties": {
+                "applicationId": "[variables('web-app-insights-name')]",
+                "application_Type": "web"
+            }
+        },
+        {
+            "name": "[variables('app-func-name')]",
             "type": "Microsoft.Web/sites",
             "apiVersion": "2018-11-01",
             "location": "[resourceGroup().location]",
             "kind": "functionapp",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', variables('app-func-server-farm'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('storage-acc-gen-purp'))]"
+                "[resourceId('Microsoft.Web/serverfarms', variables('server-farm-name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storage-acc-gen-purp-name'))]"
             ],
             "properties": {
-                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('app-func-server-farm'))]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('server-farm-name'))]",
                 "siteConfig": {
                     "appSettings": [
                         {
                             "name": "AzureWebJobsDashboard",
-                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage-acc-gen-purp'), ';AccountKey=', listKeys('storageAccountID','2015-05-01-preview').key1)]"
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage-acc-gen-purp-name'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storage-acc-gen-purp-name')),'2015-05-01-preview').key1)]"
                         },
                         {
                             "name": "AzureWebJobsStorage",
-                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage-acc-gen-purp'), ';AccountKey=', listKeys('storageAccountID','2015-05-01-preview').key1)]"
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage-acc-gen-purp-name'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storage-acc-gen-purp-name')),'2015-05-01-preview').key1)]"
                         },
                         {
                             "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage-acc-gen-purp'), ';AccountKey=', listKeys('storageAccountID','2015-05-01-preview').key1)]"
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage-acc-gen-purp-name'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storage-acc-gen-purp-name')),'2015-05-01-preview').key1)]"
                         },
                         {
                             "name": "WEBSITE_CONTENTSHARE",
-                            "value": "[toLower(variables('app-func-1'))]"
+                            "value": "[toLower(variables('app-func-name'))]"
                         },
                         {
                             "name": "FUNCTIONS_EXTENSION_VERSION",
@@ -108,7 +366,7 @@
                         },
                         {
                             "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-                            "value": "[reference(resourceId('microsoft.insights/components/', 'applicationInsightsName'), '2015-05-01').InstrumentationKey]"
+                            "value": "[reference(resourceId('microsoft.insights/components/', variables('app-insights-name')), '2015-05-01').InstrumentationKey]"
                         },
                         {
                             "name": "FUNCTIONS_WORKER_RUNTIME",

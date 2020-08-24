@@ -1,0 +1,186 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "sites_csv2excel_name": {
+            "defaultValue": "csv2excel",
+            "type": "String"
+        },
+        "serverfarms_ASP_tutotial_9bee_externalid": {
+            "defaultValue": "/subscriptions/a1a43d1d-b56d-4e93-8a06-c548f6472c28/resourceGroups/tutotial/providers/Microsoft.Web/serverfarms/ASP-tutotial-9bee",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "name": "[parameters('sites_csv2excel_name')]",
+            "location": "West Europe",
+            "tags": {
+                "tutorial": "appfun2"
+            },
+            "kind": "functionapp",
+            "properties": {
+                "enabled": true,
+                "hostNameSslStates": [
+                    {
+                        "name": "[concat(parameters('sites_csv2excel_name'), '.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Standard"
+                    },
+                    {
+                        "name": "[concat(parameters('sites_csv2excel_name'), '.scm.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Repository"
+                    }
+                ],
+                "serverFarmId": "[parameters('serverfarms_ASP_tutotial_9bee_externalid')]",
+                "reserved": false,
+                "isXenon": false,
+                "hyperV": false,
+                "siteConfig": {},
+                "scmSiteAlsoStopped": false,
+                "clientAffinityEnabled": true,
+                "clientCertEnabled": false,
+                "hostNamesDisabled": false,
+                "containerSize": 1536,
+                "dailyMemoryTimeQuota": 0,
+                "httpsOnly": false,
+                "redundancyMode": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/config",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(parameters('sites_csv2excel_name'), '/web')]",
+            "location": "West Europe",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_csv2excel_name'))]"
+            ],
+            "tags": {
+                "tutorial": "appfun2"
+            },
+            "properties": {
+                "numberOfWorkers": -1,
+                "defaultDocuments": [
+                    "Default.htm",
+                    "Default.html",
+                    "Default.asp",
+                    "index.htm",
+                    "index.html",
+                    "iisstart.htm",
+                    "default.aspx",
+                    "index.php"
+                ],
+                "netFrameworkVersion": "v4.0",
+                "phpVersion": "5.6",
+                "requestTracingEnabled": false,
+                "remoteDebuggingEnabled": false,
+                "httpLoggingEnabled": false,
+                "logsDirectorySizeLimit": 35,
+                "detailedErrorLoggingEnabled": false,
+                "publishingUsername": "$csv2excel",
+                "azureStorageAccounts": {},
+                "scmType": "None",
+                "use32BitWorkerProcess": true,
+                "webSocketsEnabled": false,
+                "alwaysOn": false,
+                "managedPipelineMode": "Integrated",
+                "virtualApplications": [
+                    {
+                        "virtualPath": "/",
+                        "physicalPath": "site\\wwwroot",
+                        "preloadEnabled": false
+                    }
+                ],
+                "loadBalancing": "LeastRequests",
+                "experiments": {
+                    "rampUpRules": []
+                },
+                "autoHealEnabled": false,
+                "cors": {
+                    "allowedOrigins": [
+                        "https://functions.azure.com",
+                        "https://functions-staging.azure.com",
+                        "https://functions-next.azure.com"
+                    ],
+                    "supportCredentials": false
+                },
+                "localMySqlEnabled": false,
+                "ipSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 1,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 1,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictionsUseMain": false,
+                "http20Enabled": false,
+                "minTlsVersion": "1.2",
+                "ftpsState": "AllAllowed",
+                "reservedInstanceCount": 0
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/deployments",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(parameters('sites_csv2excel_name'), '/089e2b91d3f14875bcbada4ce426a650')]",
+            "location": "West Europe",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_csv2excel_name'))]"
+            ],
+            "properties": {
+                "status": 4,
+                "author_email": "N/A",
+                "author": "VS Code",
+                "deployer": "ZipDeploy",
+                "message": "Created via a push deployment",
+                "start_time": "2020-08-06T09:11:24.4101951Z",
+                "end_time": "2020-08-06T09:11:30.7831187Z",
+                "active": true
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/functions",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(parameters('sites_csv2excel_name'), '/OnCsvUploaded')]",
+            "location": "West Europe",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_csv2excel_name'))]"
+            ],
+            "properties": {
+                "script_root_path_href": "https://csv2excel.azurewebsites.net/admin/vfs/site/wwwroot/OnCsvUploaded/",
+                "script_href": "https://csv2excel.azurewebsites.net/admin/vfs/site/wwwroot/bin/cs.dll",
+                "config_href": "https://csv2excel.azurewebsites.net/admin/vfs/site/wwwroot/OnCsvUploaded/function.json",
+                "href": "https://csv2excel.azurewebsites.net/admin/functions/OnCsvUploaded",
+                "config": {}
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/hostNameBindings",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(parameters('sites_csv2excel_name'), '/', parameters('sites_csv2excel_name'), '.azurewebsites.net')]",
+            "location": "West Europe",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_csv2excel_name'))]"
+            ],
+            "properties": {
+                "siteName": "csv2excel",
+                "hostNameType": "Verified"
+            }
+        }
+    ]
+}

@@ -9,7 +9,9 @@
         "storage-acc-gen-purp-name": "tyd10zadstoraccgenpurp",
         "app-insights-name": "tyd10-zad-app-insights",
         "app-service-plan-name": "tyd10-zad-app-plan",
-        "web-app-insights-name": "tyd10-zad-web-app-insights"
+        "web-app-insights-name": "tyd10-zad-web-app-insights",
+        "web-app-fe-name": "web-app-fe",
+        "app-service-plan-linux-name": "app-service-plan-linux"
     },
     "resources": [
         {
@@ -156,7 +158,7 @@
                 "enabled": false,
                 "targetResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]"
             }
-        },       
+        },
         {
             "name": "[variables('web-app-insights-name')]",
             "type": "Microsoft.Web/sites",
@@ -173,7 +175,7 @@
                 "name": "[variables('web-app-insights-name')]",
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]"
             }
-        },        
+        },
         {
             "name": "[variables('app-insights-name')]",
             "type": "Microsoft.Insights/components",
@@ -235,6 +237,48 @@
                         }
                     ]
                 }
+            }
+        },
+        {
+            "apiVersion": "2018-02-01",
+            "name": "[variables('app-service-plan-linux-name')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[resourceGroup().location]",
+            "kind": "linux",
+            "sku": {
+                "Tier": "Free",
+                "Name": "F1"
+            },
+            "properties": {
+                "name": "[variables('app-service-plan-linux-name')]",
+                "workerSize": "0",
+                "workerSizeId": "0",
+                "numberOfWorkers": "1",
+                "reserved": true
+            }
+        },
+        {
+            "apiVersion": "2018-02-01",
+            "name": "[variables('web-app-fe-name')]",
+            "type": "Microsoft.Web/sites",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms/', variables('app-service-plan-linux-name'))]"
+            ],
+            "properties": {
+                "name": "[variables('web-app-fe-name')]",
+                "siteConfig": {
+                    "linuxFxVersion": "NODE|lts",
+                    "alwaysOn": false,
+                    "appSettings": [
+                        {
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": "[reference(resourceId('microsoft.insights/components/', variables('app-insights-name')), '2015-05-01').InstrumentationKey]"
+                        }
+                    ]
+                },
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-linux-name'))]",
+                "clientAffinityEnabled": false
             }
         }
     ],

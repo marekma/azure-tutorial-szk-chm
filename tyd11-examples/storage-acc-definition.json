@@ -4,9 +4,132 @@
     "parameters": {},
     "functions": [],
     "variables": {
-        "stor-acc-name": "tyd11storacc1"
+        "stor-acc-name": "tyd11storacc1",
+        "func-app-name": "tyd11funcapp1",
+        "server-farm-name": "tyd11serverfarm1",
+        "storage-acc-gen-purp-name": "tyd11storaccgenpurp",
+        "tag-name": "tyd11-tutorial",
+        "app-service-plan-name": "tyd11appserviceplan1",
+        "app-insights-name": "tyd11appinsights1",
+        "web-app-insights-name": "tyd11appinsightswebapp1"
     },
     "resources": [
+        {
+            "name": "[variables('app-service-plan-name')]",
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "F1",
+                "capacity": 1
+            },
+            "tags": {
+                "displayName": "[variables('app-service-plan-name')]"
+            },
+            "properties": {
+                "name": "[variables('app-service-plan-name')]"
+            }
+        },
+        {
+            "name": "[variables('app-insights-name')]",
+            "type": "Microsoft.Insights/autoscalesettings",
+            "apiVersion": "2014-04-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]": "Resource",
+                "displayName": "[concat(variables('app-insights-name'), 'AutoScale Settings for ', variables('app-service-plan-name'))]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]"
+            ],
+            "properties": {
+                "name": "[variables('app-insights-name')]",
+                "profiles": [
+                    {
+                        "name": "Default",
+                        "capacity": {
+                            "minimum": 1,
+                            "maximum": 2,
+                            "default": 1
+                        },
+                        "rules": [
+                            {
+                                "metricTrigger": {
+                                    "metricName": "CpuPercentage",
+                                    "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]",
+                                    "timeGrain": "PT1M",
+                                    "statistic": "Average",
+                                    "timeWindow": "PT10M",
+                                    "timeAggregation": "Average",
+                                    "operator": "GreaterThan",
+                                    "threshold": 80.0
+                                },
+                                "scaleAction": {
+                                    "direction": "Increase",
+                                    "type": "ChangeCount",
+                                    "value": 1,
+                                    "cooldown": "PT10M"
+                                }
+                            },
+                            {
+                                "metricTrigger": {
+                                    "metricName": "CpuPercentage",
+                                    "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]",
+                                    "timeGrain": "PT1M",
+                                    "statistic": "Average",
+                                    "timeWindow": "PT1H",
+                                    "timeAggregation": "Average",
+                                    "operator": "LessThan",
+                                    "threshold": 60.0
+                                },
+                                "scaleAction": {
+                                    "direction": "Decrease",
+                                    "type": "ChangeCount",
+                                    "value": 1,
+                                    "cooldown": "PT1H"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "enabled": false,
+                "targetResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]"
+            }
+        },
+        {
+            "name": "[variables('web-app-insights-name')]",
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('app-service-plan-name'))]": "Resource",
+                "displayName": "[variables('web-app-insights-name')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]"
+            ],
+            "properties": {
+                "name": "[variables('web-app-insights-name')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]"
+            }
+        },
+        {
+            "name": "[variables('app-insights-name')]",
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2015-05-01",
+            "location": "[resourceGroup().location]",
+            "kind": "web",
+            "tags": {
+                "displayName": "[concat(variables('app-insights-name'), ' Component for ', variables('web-app-insights-name'))]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('web-app-insights-name'))]"
+            ],
+            "properties": {
+                "applicationId": "[variables('web-app-insights-name')]",
+                "application_Type": "web"
+            }
+        },
         {
             "name": "[variables('stor-acc-name')]",
             "type": "Microsoft.Storage/storageAccounts",
@@ -19,6 +142,115 @@
             "sku": {
                 "name": "Standard_LRS",
                 "tier": "Standard"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "name": "[variables('storage-acc-gen-purp-name')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "tutorial": "[variables('tag-name')]"
+            },
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "Storage",
+            "properties": {
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [],
+                    "ipRules": [],
+                    "defaultAction": "Allow"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "keyType": "Account",
+                            "enabled": true
+                        },
+                        "blob": {
+                            "keyType": "Account",
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "name": "[variables('server-farm-name')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "tutorial": "[variables('tag-name')]"
+            },
+            "sku": {
+                "name": "Y1",
+                "tier": "Dynamic",
+                "size": "Y1",
+                "family": "Y",
+                "capacity": 0
+            },
+            "kind": "functionapp",
+            "properties": {
+                "perSiteScaling": false,
+                "maximumElasticWorkerCount": 1,
+                "isSpot": false,
+                "reserved": false,
+                "isXenon": false,
+                "hyperV": false,
+                "targetWorkerCount": 0,
+                "targetWorkerSizeId": 0
+            }
+        },
+        {
+            "name": "[variables('func-app-name')]",
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "location": "[resourceGroup().location]",
+            "kind": "functionapp",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('server-farm-name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storage-acc-gen-purp-name'))]"
+            ],
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('server-farm-name'))]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage-acc-gen-purp-name'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storage-acc-gen-purp-name')),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage-acc-gen-purp-name'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storage-acc-gen-purp-name')),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage-acc-gen-purp-name'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storage-acc-gen-purp-name')),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[toLower(variables('func-app-name'))]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~3"
+                        },
+                        {
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": "[reference(resourceId('microsoft.insights/components/', variables('app-insights-name')), '2015-05-01').InstrumentationKey]"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "dotnet"
+                        }
+                    ]
+                }
             }
         }
     ],

@@ -1,0 +1,7 @@
+POST http://localhost:7071/api/BlobStorageDemo
+
+Content-Type: application/json
+
+{
+    "test": "content bigger than bigger"
+}

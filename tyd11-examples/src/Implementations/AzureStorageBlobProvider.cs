@@ -16,7 +16,7 @@ namespace Company.Function.Implementations
         public AzureStorageBlobProvider(IConfiguration configuration)
         {
             this.configuration = configuration;
-            this.connectionstring = this.configuration.GetConnectionString("BlobStorage");
+            this.connectionstring = this.configuration.GetConnectionString("AzureStorage");
             this.containers = new Dictionary<string, BlobContainerClient>();
         }
 

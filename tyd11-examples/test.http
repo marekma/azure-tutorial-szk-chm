@@ -5,3 +5,13 @@ Content-Type: application/json
 {
     "test": "content bigger than bigger"
 }
+
+###
+
+POST http://localhost:7071/api/QueueStorageDemo
+
+Content-Type: application/json
+
+{
+    "test": "message"
+}

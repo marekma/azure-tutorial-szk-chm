@@ -13,6 +13,7 @@ namespace Company.Function
         public override void Configure(IFunctionsHostBuilder builder)
         {
             builder.Services.AddSingleton<IBlobProvider, AzureStorageBlobProvider>();
+            builder.Services.AddSingleton<IQueueProvider, AzureStorageQueueProvider>();
         }
     }
 }

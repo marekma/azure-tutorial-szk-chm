@@ -15,3 +15,13 @@ Content-Type: application/json
 {
     "test": "message"
 }
+
+###
+
+POST http://localhost:7071/api/FileShareDemo
+
+Content-Type: application/json
+
+{
+    "test": "file"
+}

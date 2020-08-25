@@ -8,26 +8,25 @@ using System.Threading.Tasks;
 
 namespace Company.Function
 {
-    public class BlobStorageDemo
+    public class FileShareDemo
     {
-        private readonly IBlobProvider blobProvider;
+        private readonly IFileShareProvider shareProvider;
         private readonly IFileNameGenerator fileNameGenerator;
 
-        public BlobStorageDemo(IBlobProvider blobProvider, IFileNameGenerator fileNameGenerator)
+        public FileShareDemo(IFileShareProvider shareProvider, IFileNameGenerator fileNameGenerator)
         {
-            this.blobProvider = blobProvider;
+            this.shareProvider = shareProvider;
             this.fileNameGenerator = fileNameGenerator;
         }
 
-        [FunctionName("BlobStorageDemo")]
+        [FunctionName("FileShareDemo")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
             var name = this.fileNameGenerator.ForJson();
-            await this.blobProvider.Upload(req.Body, name);
-            var response = await this.blobProvider.Download(name);
-
+            await this.shareProvider.Upload(req.Body, name);
+            var response = await this.shareProvider.Download(name);
             return new OkObjectResult(response);
         }
     }
